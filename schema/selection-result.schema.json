@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fenlara:schema:selection-result:v0.1",
+  "title": "Fenlara Selection Result",
+  "description": "Output of select(). Every collection keyed by offer identity uses offer_id, never agent_id, so that two offers from the same agent are always distinguishable in the result — this mirrors the decision-key rule in agent-record.schema.json.",
+  "type": "object",
+
+  "required": ["chosen", "scores", "rejections", "warnings"],
+  "additionalProperties": false,
+
+  "properties": {
+    "chosen": {
+      "description": "The winning offer, or null if every offer was rejected by hard constraints.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["offer_id", "agent_id"],
+          "additionalProperties": false,
+          "properties": {
+            "offer_id": { "type": "string", "minLength": 1 },
+            "agent_id": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+
+    "scores": {
+      "type": "object",
+      "description": "One entry per surviving offer, keyed by offer_id. Empty if every offer was rejected.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Per-criterion normalized scores (0..1) plus the weighted 'total' actually used to rank this offer.",
+        "required": ["total"],
+        "additionalProperties": { "type": "number" }
+      }
+    },
+
+    "rejections": {
+      "type": "object",
+      "description": "One entry per rejected offer, keyed by offer_id, listing every hard-constraint reason it failed.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 1
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "description": "Human-readable notes that do not change the outcome: missing preference attributes scored as 0, ties, or the all-rejected case.",
+      "items": { "type": "string" }
+    },
+
+    "tie_with": {
+      "type": "array",
+      "description": "Present only when 'chosen' was picked by tie-break. Lists the offer_id(s) that scored exactly equal to 'chosen.offer_id' but lost the lexicographic tie-break.",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}

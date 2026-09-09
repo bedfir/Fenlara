@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fenlara:schema:selection-request:v0.1",
+  "title": "Fenlara Selection Request",
+  "description": "Input to select() alongside a list of execution offers (see agent-record.schema.json). Both top-level fields are optional and default to empty — an empty request is valid and simply scores every offer 0, tie-broken by offer_id.",
+  "type": "object",
+
+  "properties": {
+    "constraints": {
+      "type": "object",
+      "description": "HARD filters, evaluated before any scoring. An offer failing any constraint is rejected outright and never scored (fail-closed). Fenlara currently recognizes four keys natively; ANY OTHER KEY is deliberately still accepted by this schema, because Fenlara's runtime behavior for an unrecognized constraint key is to reject every offer fail-closed rather than silently ignore it — that behavior is part of the contract and this schema must not prevent testing it.",
+      "properties": {
+        "jurisdiction": {
+          "type": "string",
+          "description": "Offer's 'jurisdiction' must equal this value exactly."
+        },
+        "max_price": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Offer's 'price' must be <= this value."
+        },
+        "max_latency_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Offer's 'latency_ms' must be <= this value."
+        },
+        "required_protocol": {
+          "type": "string",
+          "description": "Offer's 'protocol' must equal this value exactly."
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "preferences": {
+      "type": "object",
+      "description": "SOFT weights, applied only to offers surviving the constraints. Weights are normalized automatically and need not sum to 1. Fenlara recognizes 'trust', 'price', 'latency', 'availability' natively. The current prototype also happens to score any other key against a same-named field on the offer (field = FIELD_BY_CRITERION.get(criterion, criterion)) — this schema permits that shape, but whether arbitrary custom criteria are an OFFICIAL, supported Fenlara feature or just emergent prototype behavior is an open design question, not yet decided for v0.1.",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "description": "A weight. Zero or omitted means the criterion has no influence; negative weights are not supported."
+      }
+    }
+  },
+
+  "additionalProperties": false
+}

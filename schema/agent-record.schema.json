@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fenlara:schema:agent-record:v0.1",
+  "x-id-note": "Deliberately NOT an https://fenlara.dev/... URL: the domain is not secured yet, and baking an unowned domain into the schema identity would be a dependency this contract shouldn't have. Revisit once (and if) the domain is actually held.",
+  "title": "Fenlara Execution Offer",
+  "description": "This schema describes an EXECUTION OFFER — the only object Fenlara reasons about. It does not describe the Fenlara engine, a discovery protocol, or an agent identity system. Fenlara does not standardize what an agent is, how it is discovered, or how it is verified; it only defines the minimal, flat contract an offer must satisfy to be selectable. Upstream systems (DAWN-style discovery, A2A Agent Cards, ANP descriptions, private registries...) are expected to normalize their own richer records down to this shape before calling select().",
+  "type": "object",
+
+  "required": ["offer_id", "agent_id"],
+
+  "properties": {
+    "offer_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED, DECISION KEY. Unique identifier of this specific execution offer. Every key in a SelectionResult (scores, rejections, chosen.offer_id) is an offer_id. Two offers from the same agent MUST have different offer_id values."
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED, AUDIT METADATA — not a decision input. Fenlara never branches a constraint or a score on agent_id; it is carried through unread by the decision logic and only reattached in the final result, so the caller can trace a chosen offer back to the agent that issued it, and so several offers from the same agent can be told apart without being treated specially."
+    },
+
+    "protocol": {
+      "type": "string",
+      "description": "DECISION INPUT (conditional) — read only if the request supplies a 'required_protocol' constraint, compared for exact equality. Fenlara has no built-in list of valid protocols — 'a2a', 'anp', 'mcp', or any future value are all opaque strings to it. An offer has exactly one protocol; an agent with several communication options publishes several offers.",
+      "examples": ["a2a", "anp", "mcp"]
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "DECISION INPUT (conditional) — read only if the request supplies a 'jurisdiction' constraint, compared for exact equality. Fenlara does not validate this against any real-world list of jurisdictions."
+    },
+    "price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "DECISION INPUT (conditional) — read by the 'max_price' constraint (if present) and by the 'price' preference criterion (lower is better, normalized against the surviving pool). No currency is implied or enforced by Fenlara — that agreement must exist upstream."
+    },
+    "latency_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "DECISION INPUT (conditional) — read by the 'max_latency_ms' constraint (if present) and by the 'latency' preference criterion (lower is better). Fenlara treats this as a self-reported number, not a measured guarantee."
+    },
+    "trust": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "DECISION INPUT (conditional) — read only by the 'trust' preference criterion (higher is better). Fenlara does not compute this value and cannot verify it — it is trusted as published. Computing and attesting trust is a discovery/registry-layer concern (see e.g. AINS's evidence model), not a Fenlara concern."
+    },
+    "availability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "DECISION INPUT (conditional) — read only by the 'availability' preference criterion (higher is better). Purely a snapshot value at selection time — Fenlara makes no freshness or liveness guarantee about it; re-verification before connecting is the Resolution layer's job."
+    },
+
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "PASSTHROUGH. Fenlara does not match, filter, or score on capabilities — it assumes the offer already matches the requester's intent by the time it reaches selection (that matching happens upstream, in Discovery). Carried through only so the caller doesn't need a second lookup."
+    },
+    "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "PASSTHROUGH. Fenlara never dereferences, calls, or validates this URL. It is opaque data handed to the Resolution/Connection layers once an offer is chosen."
+    }
+  },
+
+  "additionalProperties": true,
+  "$comment": "additionalProperties is deliberately true: an offer may carry any amount of extra metadata Fenlara doesn't know about. Unknown FIELDS on an offer are always ignored. This is distinct from an unknown CONSTRAINT KEY in a selection request, which Fenlara rejects fail-closed — an unrecognized field you didn't ask about is harmless; an unrecognized filter you did ask for and got silently ignored is not."
+}

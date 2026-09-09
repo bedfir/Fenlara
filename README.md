@@ -190,15 +190,53 @@ select(offers: List[Offer], request: SelectionRequest) -> SelectionResult
 
 ---
 
+## Install & Usage
+
+```bash
+pip install -e ".[dev]"
+```
+
+```python
+from fenlara import select
+
+offers = [
+    {"offer_id": "offer-fast", "agent_id": "agent-1", "protocol": "a2a",
+     "jurisdiction": "EU", "price": 3.00, "latency_ms": 50, "trust": 0.94},
+    {"offer_id": "offer-cheap", "agent_id": "agent-2", "protocol": "a2a",
+     "jurisdiction": "EU", "price": 0.40, "latency_ms": 900, "trust": 0.91},
+]
+request = {
+    "constraints": {"jurisdiction": "EU", "max_price": 5.00},
+    "preferences": {"trust": 0.6, "price": 0.2, "latency": 0.2},
+}
+
+result = select(offers, request)
+print(result["chosen"])  # {'offer_id': 'offer-fast', 'agent_id': 'agent-1'}
+```
+
+Run the test suite with:
+```bash
+pytest
+```
+
+---
+
 ## Project Status & Roadmap
 
 ### v0.1 — Prototype (Current)
 * Pure Python implementation with **zero** external network, registry, DNS, or LLM dependencies.
-* Verified with **24 passing tests** under **JSON Schema 2020-12**.
+* Verified with **15 passing tests** (pytest, fixture-based) under **JSON Schema 2020-12**.
 * Implements basic `agent_id` / `offer_id` separation, constraint filtering, scoring, deterministic tie-breaking, and audit reporting.
+* Formal `SelectionRequest` and `SelectionResult` schemas (see `schema/`), cross-validated against real `select()` output — not just the offer contract.
 
 ### Roadmap
 
-- [ ] **v0.2:** Formalize `SelectionRequest` / `SelectionResult` schemas, introduce scoring policy abstractions, and enhance audit tooling.
+- [ ] **v0.2:** Scoring policy abstraction, absolute vs. relative scoring model, richer explanation/audit tooling, validation tooling.
 - [ ] **Open Architecture Question:** Evaluate relative pool normalization vs. absolute scoring models before stabilizing public contracts (preventing candidate C from skewing relative preferences between A and B).
 - [ ] **Future:** Local API wrapper → Network API → Ecosystem integrations (A2A, ANP, MCP).
+
+---
+
+## License
+
+Apache License 2.0 — see [LICENSE](./LICENSE).
