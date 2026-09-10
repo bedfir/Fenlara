@@ -29,6 +29,11 @@ dev = [
     "pytest>=7.0.0",
     "jsonschema>=4.0.0",
 ]
+ 
+[project.urls]
+Homepage = "https://github.com/bedfir/Fenlara"
+Repository = "https://github.com/bedfir/Fenlara"
+Issues = "https://github.com/bedfir/Fenlara/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
